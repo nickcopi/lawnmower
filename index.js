@@ -1,52 +1,4 @@
-
-let canvas = document.getElementById('canvas');
-let ctx = canvas.getContext('2d');
-
-let grasses = [];
-let player;
-let tick = 0;
-
-let init = ()=>{
-	populateGrass(150);
-	player = new Player(250,250);
-}
-
-let collide = (o1,o2)=>(o1.x < o2.x + o2.width && o1.x + o1.width > o2.x && o1.y < o2.y + o2.height && o1.y + o1.height > o2.y) && o1 !== o2;
-
-let interval = setInterval(()=>{
-	update();
-	render();
-},1000/60);
-
-let update = ()=>{
-	if(!tick) init();
-	player.move();
-	checkCollisions();
-	tick++;
-}
-
-let checkCollisions = ()=>{
-	grasses = grasses.filter(g=>!collide(g,player));
-}
-
-let render = ()=>{
-	ctx.clearRect(0,0,canvas.width,canvas.height);
-	ctx.fillStyle = '#228B22';
-	ctx.fillRect(0,0,canvas.width,canvas.height);
-	ctx.fillStyle = '#008000';
-	grasses.forEach(g=>{
-		ctx.fillRect(g.x,g.y,g.width,g.height);
-	});
-	ctx.fillStyle = 'white';
-	ctx.fillRect(player.x,player.y,player.width,player.height);
-}
-
-
-let populateGrass = num=>{
-	if(num <= 0) return;
-	grasses.push(new Grass(Math.floor(Math.random()*(canvas.width-6)),Math.floor(Math.random()*(canvas.height-6)),6,6));
-	populateGrass(num-1);
-}
+let game;
 
 const Directions = {
 	RIGHT:1,
@@ -54,6 +6,84 @@ const Directions = {
 	UP:3,
 	DOWN:4
 }
+
+class Game{
+	constructor(canvas){
+		this.canvas = canvas;
+		this.scene = new GrassScene(canvas);
+
+	window.addEventListener('keypress',e=>{
+		switch(e.key){
+			case 'w':
+				this.scene.player.direction = Directions.UP;
+			break;
+			case 'a':
+				this.scene.player.direction = Directions.LEFT;
+			break;
+			case 's':
+				this.scene.player.direction = Directions.DOWN;
+			break;
+			case 'd':
+				this.scene.player.direction = Directions.RIGHT;
+			break;
+		}
+	});
+	}
+}
+
+
+class Scene{
+	constructor(canvas){
+		this.canvas = canvas;
+		this.ctx = canvas.getContext('2d');
+	}
+	collide(o1,o2){
+		return (o1.x < o2.x + o2.width && o1.x + o1.width > o2.x && o1.y < o2.y + o2.height && o1.y + o1.height > o2.y) && o1 !== o2;
+	}
+
+}
+
+class GrassScene extends Scene{
+	constructor(canvas){
+		super(canvas);
+		this.grasses = [];
+		this.tick = 0;
+		this.populateGrass(150);
+		this.player = new Player(250,250);
+		this.interval = setInterval(()=>{
+			this.update();
+			this.render();
+		},1000/60);
+	}
+	update(){
+		this.player.move();
+		this.checkCollisions();
+		this.tick++;
+	}
+	render(){
+		let ctx = this.ctx;
+		let canvas = this.canvas;
+		ctx.clearRect(0,0,canvas.width,canvas.height);
+		ctx.fillStyle = '#228B22';
+		ctx.fillRect(0,0,canvas.width,canvas.height);
+		ctx.fillStyle = '#008000';
+		this.grasses.forEach(g=>{
+			ctx.fillRect(g.x,g.y,g.width,g.height);
+		});
+		ctx.fillStyle = 'white';
+		ctx.fillRect(this.player.x,this.player.y,this.player.width,this.player.height);
+	}
+	checkCollisions(){
+		this.grasses = this.grasses.filter(g=>!this.collide(g,this.player));
+	}
+	populateGrass(num){
+		if(num <= 0) return;
+		this.grasses.push(new Grass(Math.floor(Math.random()*(this.canvas.width-6)),Math.floor(Math.random()*(this.canvas.height-6)),6,6));
+		this.populateGrass(num-1);
+	}
+
+}
+
 
 class Grass{
 	constructor(x,y,width,height){
@@ -97,19 +127,7 @@ class Player{
 }
 
 
-window.addEventListener('keypress',e=>{
-	switch(e.key){
-		case 'w':
-			player.direction = Directions.UP;
-		break;
-		case 'a':
-			player.direction = Directions.LEFT;
-		break;
-		case 's':
-			player.direction = Directions.DOWN;
-		break;
-		case 'd':
-			player.direction = Directions.RIGHT;
-		break;
-	}
+
+window.addEventListener('load',()=>{
+	game = new Game(document.getElementById('canvas'));
 });
