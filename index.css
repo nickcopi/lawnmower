@@ -1,3 +1,48 @@
 body{
-	margin: 0
+	margin: 0;
+	font-family: Helvetica;
+	color:white;
+}
+.upgrade{
+	width:200px;
+	height:100px;
+	background-color:#444444;
+	cursor:pointer;
+	position:absolute;
+	text-align:center;
+	left:600px;
+	line-height:1.4;
+}
+.rightBar{
+	width:200px;
+	height:500px;
+	background-color:#444444;
+	position:absolute;
+	top:0px;
+	left:600px;
+}
+.bottomBar{
+	width:800px;
+	height:100px;
+	background-color:#444444;
+	position:absolute;
+	top:500px;
+	left:0px;
+}
+.itemBar{
+	overflow:hidden;
+	width:300px;
+	height:75px;
+	position:absolute;
+	top:512.5px;
+	left:12.5px;
+	background-color:#666666;
+}
+.moneyText{
+	position:absolute;
+	left:325px;
+	top:512.5px;
+}
+.upgrade:hover{
+	background-color:#555555;
 }
