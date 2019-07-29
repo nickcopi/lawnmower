@@ -34,6 +34,10 @@ class Game{
 				case 'd':
 					this.scene.player.direction = Directions.RIGHT;
 				break;
+				case 'e':
+					if(this.scene.player.canAutoMove())
+						this.scene.player.autoMove = !this.scene.player.autoMove;
+				break;
 			}
 		});
 	}
@@ -124,15 +128,15 @@ class GrassScene extends Scene{
 				hoverBox = document.createElement('div');
 				hoverBox.className = 'hoverBox';
 				hoverBox.style.left = e.clientX - 40 + 'px';
-				hoverBox.style.top = e.clientY - 100 + 'px';
-				hoverBox.innerText = `Grass\n Sell price: ${item.cost}`;
+				hoverBox.style.top = e.clientY - 40 + 'px';
+				hoverBox.innerText = `Grass\n Sell price: ${Math.round(item.cost * this.player.getSellMultiplier())}`;
 				this.ui.baseUI.appendChild(hoverBox);
 			});
 			item.img.addEventListener('mouseout',(e)=>{
 				hoverBox.remove();
 			});
 			item.img.addEventListener('click',e=>{
-				item.sell(game.wallet);
+				item.sell(game.wallet, this.player.getMaxStack(),this.player.getSellMultiplier());
 			});
 			let counter = document.createElement('div');
 			counter.className = 'itemCounter';
@@ -154,7 +158,11 @@ class GrassScene extends Scene{
 	updateMenu(){
 		this.ui.upgradeUI.forEach((ui,i)=>{
 			let upgrade = this.player.upgrades.list[i];
-			ui.innerHTML = `<b>${upgrade.name}</b><br>${upgrade.getText()}<br>$${upgrade.getCost()}`;
+			if(upgrade.locked){
+				ui.innerHTML = `<b>${upgrade.name} ${upgrade.level}</b><br> ${upgrade.getLockedText()}<br>Max Upgraded.`;
+				ui.className = 'upgrade locked';
+			}
+			else ui.innerHTML = `<b>${upgrade.name} ${upgrade.level+1}</b><br>${upgrade.getText()}<br>$${upgrade.getCost()}`;
 		});
 		this.ui.counters.forEach((counter,i)=>{
 			counter.innerText = game.wallet.items.list[i].count;
@@ -178,7 +186,9 @@ class GrassScene extends Scene{
 		this.grasses = this.grasses.filter(harvest=>{
 			let didCollide = this.collide(this.player,harvest)
 			if(didCollide){
-				game.wallet.items.list[harvest.type].count++;
+				let harvestCount = 1;
+				if(Math.random() < this.player.upgrades.harvestUpgrade.getBonus()) harvestCount = 2;
+				game.wallet.items.list[harvest.type].count += harvestCount;
 			}
 			return !didCollide;
 		});
@@ -214,10 +224,12 @@ class Player{
 	constructor(x,y){
 		this.x = x;
 		this.y = y;
+		this.baseStack = 5;
 		this.baseWidth = 30;
 		this.baseHeight = 30;
 		this.direction = Directions.RIGHT;
 		this.baseSpeed = 3;
+		this.autoMove = false;
 		this.upgrades = new UpgradeManager();
 	}
 	getSpeed(){
@@ -228,6 +240,16 @@ class Player{
 	}
 	getWidth(){
 		return this.baseWidth + this.baseWidth * this.upgrades.sizeUpgrade.getBonus();
+	}
+	getMaxStack(){
+		/*For selling, not for items*/
+		return Math.round(this.baseStack + this.baseStack * (this.upgrades.salesUpgrade.getBonus() * 5));
+	}
+	getSellMultiplier(){
+		return this.upgrades.salesUpgrade.getBonus() + 1;
+	}
+	canAutoMove(){
+		return this.upgrades.moveUpgrade.getBonus() > 0;
 	}
 	move(){
 		switch(this.direction){
@@ -244,10 +266,32 @@ class Player{
 				this.y += this.getSpeed();
 			break;
 		}
-		if(this.x < 0) this.x = 0;
-		if(this.x > canvas.width - this.getWidth()) this.x = canvas.width-this.getWidth();
-		if(this.y < 0) this.y = 0;
-		if(this.y > canvas.height - this.getHeight()) this.y = canvas.height-this.getHeight();
+		let hitWall;
+		if(this.x < 0){ 
+			this.x = 0;
+			hitWall = true;
+		}
+		if(this.x > canvas.width - this.getWidth()){
+			this.x = canvas.width-this.getWidth();
+			hitWall = true;
+		}
+		if(this.y < 0){
+			this.y = 0;
+			hitWall = true;
+		}
+		if(this.y > canvas.height - this.getHeight()){
+			this.y = canvas.height-this.getHeight();
+		}
+
+		if(this.autoMove && hitWall){
+			this.doAutoMove();
+		}
+		if(this.autoMove && Math.random() < 0.02){
+			this.doAutoMove();
+		}
+	}
+	doAutoMove(){
+		this.direction = Math.floor(Math.random()*4)+1;
 	}
 
 }
@@ -259,31 +303,38 @@ class Upgrade{
 		this.cost = cost;
 		this.name = name;
 		this.desc = desc;
+		this.locked = false;
 	}
 	getCost(){
 		/*Probably tweak the cost formula*/
-		return this.cost * (this.level+1) * (this.level+1) + 20;
+		return Math.round(this.cost * (this.level+1) * (this.level+1) + (20 * this.cost));
 	}
 	buy(wallet){
+		if(this.locked) return;
 		const price = this.getCost();
 		if(wallet.money < price)
 			return `Cannot afford. Need $${price-wallet.money} more!`
 		wallet.money -= price;
 		this.level++;
+		if(this.lockValue && this.getBonus() > this.lockValue) this.locked = true;
 		return 'Upgrade purchased';
+	}
+	getLockedText(){
+		return this.getText();
 	}
 }
 class SpeedUpgrade extends Upgrade{
 	constructor(){
-		super(1,'Speed','Make vehicle move faster');
+		super(0.9,'Speed','Make vehicle move faster');
 
 	}
 	/*return bonus as a decimal multiplier*/
 	getBonus(level=this.level){
-		return level*level/50;
+		if(!level) return 0;
+		return level*Math.log(level)/20 + 0.03;
 	}
 	getText(){
-		return `${this.desc} by ${this.getBonus(this.level+1) * 100}%.`;
+		return `${this.desc} by ${Math.round(this.getBonus(this.level+1) * 100)}%.`;
 	}
 
 }
@@ -294,10 +345,56 @@ class SizeUpgrade extends Upgrade{
 	}
 	/*return bonus as a decimal multiplier*/
 	getBonus(level=this.level){
-		return level*level/50;
+		if(!level) return 0;
+		return level*Math.log(level)/20 + 0.03;
 	}
 	getText(){
-		return `${this.desc} by ${this.getBonus(this.level+1) * 100}%.`;
+		return `${this.desc} by ${Math.round(this.getBonus(this.level+1) * 100)}%.`;
+	}
+
+}
+class HarvestUpgrade extends Upgrade{
+	constructor(){
+		super(0.8,'Harvest','Increase chance for 2x harvest');
+		this.lockValue = 1;
+	}
+	/*return bonus as a decimal multiplier*/
+	getBonus(level=this.level){
+		return level * level/100 + 0.03;
+	}
+	getText(){
+		return `${this.desc} by ${Math.round(this.getBonus(this.level+1) * 100)}%.`;
+	}
+	getLockedText(){
+		return `2x harvests`;
+	}
+}
+class SalesUpgrade extends Upgrade{
+	constructor(){
+		super(0.75,'Sales','Items sell for');
+	}
+	/*return bonus as a decimal multiplier*/
+	getBonus(level=this.level){
+		if(!level) return 0;
+		return level * Math.log(level)/50 + 0.04;
+	}
+	getText(){
+		return `${this.desc} ${Math.round(this.getBonus(this.level+1) * 100)}% more. Sell ${Math.round(this.getBonus(this.level+1) * 500)}% larger stacks.`;
+	}
+
+}
+class moveUpgrade extends Upgrade{
+	constructor(){
+		super(100,'Automove','Press E to toggle automatic movement.');
+		this.lockValue = 0.02;
+	}
+	/*return bonus as a decimal multiplier*/
+	getBonus(level=this.level){
+		if(!level) return 0;
+		return level * Math.log(level)/50 + 0.04;
+	}
+	getText(){
+		return this.desc;
 	}
 
 }
@@ -305,7 +402,10 @@ class UpgradeManager{
 	constructor(){
 		this.speedUpgrade = new SpeedUpgrade();
 		this.sizeUpgrade = new SizeUpgrade();
-		this.list = [this.speedUpgrade,this.sizeUpgrade];
+		this.harvestUpgrade = new HarvestUpgrade();
+		this.salesUpgrade = new SalesUpgrade();
+		this.moveUpgrade = new moveUpgrade();
+		this.list = [this.speedUpgrade,this.sizeUpgrade,this.harvestUpgrade,this.salesUpgrade,this.moveUpgrade];
 	}
 }
 
@@ -315,9 +415,9 @@ class Item{
 		this.cost = cost;
 		this.count = 0;
 	}
-	sell(wallet){
-		let usedCount = (this.count > 5)?5:this.count;
-		wallet.money += this.cost * usedCount;
+	sell(wallet,max,multiplier){
+		let usedCount = (this.count > max)?max:this.count;
+		wallet.money += Math.round(this.cost * usedCount * multiplier);
 		this.count -= usedCount;
 	}
 }
