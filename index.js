@@ -326,7 +326,7 @@ class Upgrade{
 class SpeedUpgrade extends Upgrade{
 	constructor(){
 		super(0.9,'Speed','Make vehicle move faster');
-
+		this.lockValue = 5;
 	}
 	/*return bonus as a decimal multiplier*/
 	getBonus(level=this.level){
@@ -341,7 +341,7 @@ class SpeedUpgrade extends Upgrade{
 class SizeUpgrade extends Upgrade{
 	constructor(){
 		super(1,'Size','Make vehicle bigger');
-
+		this.lockValue = 3;
 	}
 	/*return bonus as a decimal multiplier*/
 	getBonus(level=this.level){
@@ -383,7 +383,7 @@ class SalesUpgrade extends Upgrade{
 	}
 
 }
-class moveUpgrade extends Upgrade{
+class MoveUpgrade extends Upgrade{
 	constructor(){
 		super(100,'Automove','Press E to toggle automatic movement.');
 		this.lockValue = 0.02;
@@ -404,7 +404,7 @@ class UpgradeManager{
 		this.sizeUpgrade = new SizeUpgrade();
 		this.harvestUpgrade = new HarvestUpgrade();
 		this.salesUpgrade = new SalesUpgrade();
-		this.moveUpgrade = new moveUpgrade();
+		this.moveUpgrade = new MoveUpgrade();
 		this.list = [this.speedUpgrade,this.sizeUpgrade,this.harvestUpgrade,this.salesUpgrade,this.moveUpgrade];
 	}
 }
