@@ -1,4 +1,5 @@
 let game;
+let sprites;
 
 const Directions = {
 	RIGHT:1,
@@ -177,7 +178,7 @@ class GrassScene extends Scene{
 		ctx.fillRect(0,0,canvas.width,canvas.height);
 		ctx.fillStyle = '#008000';
 		this.grasses.forEach(g=>{
-			ctx.fillRect(g.x,g.y,g.width,g.height);
+			ctx.drawImage(g.img,g.x,g.y,g.width,g.height);
 		});
 		ctx.fillStyle = 'white';
 		ctx.fillRect(this.player.x,this.player.y,this.player.getWidth(),this.player.getHeight());
@@ -217,7 +218,17 @@ class Grass extends Harvestable{
 	constructor(x,y,width,height){
 		super(x,y,width,height);
 		this.type = Items.GRASS;
+		this.img = sprites.grass;
 	}
+}
+
+
+class SpriteManager{
+	constructor(){
+		this.grass = new Image();
+		this.grass.src = 'images/grass.png';
+	}
+
 }
 
 class Player{
@@ -445,3 +456,4 @@ class ItemManager{
 window.addEventListener('load',()=>{
 	game = new Game(document.getElementById('canvas'));
 });
+sprites = new SpriteManager();
