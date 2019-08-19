@@ -1,0 +1,119 @@
+class Player
+- double x
+- double y
+- final int baseStack
+- final int baseWidth
+- final int baseHeight
+- final int baseSpeed
+- Direction direction
+- boolean autoMove
+- UpgradeManager upgrades
+--------------------------
++ Player(int x, int y)
++ double getSpeed()
++ double getHeight()
++ double getWidth()
++ double getX()
++ double getY()
++ int getMaxStack()
++ double getSellMultiplier()
++ boolean canAutoMove()
++ void move()
+- void doAutoMove()
+
+Enum Direction
+RIGHT
+LEFT
+UP
+DOWN
+
+
+
+abstract class Upgrade
+- int level
+- double lockValue
+- double cost
+- String name
+- String description
+- boolean locked
+---------------------
++ Upgrade(double cost, int lockValue, String name, String desc)
++ boolean isLocked()
++ int getCost()
++ String buy(Wallet wallet)
++ String getLockedText()
++ abstract double getBonus(int level)
++ abstract double getBonus()
++ abstract String getText()
+
+
+class SpeedUpgrade extends Upgrade
++ SpeedUpgrade()
++ double getBonus(int level)
++ double getBonus(level)
++ String getText()
+
+
+class SizeUpgrade extends Upgrade
++ SizeUpgrade()
++ double getBonus(int level)
++ double getBonus(level)
++ String getText()
+
+class HarvestUpgrade extends Upgrade
++ HarvestUpgrade()
++ double getBonus(int level)
++ double getBonus(level)
++ String getText()
+
+class SalesUpgrade extends Upgrade
++ SalesUpgrade()
++ double getBonus(int level)
++ double getBonus(level)
++ String getText()
+
+class MoveUpgrade extends Upgrade
++ MoveUpgrade()
++ double getBonus(int level)
++ double getBonus(level)
++ String getText()
+
+class UpgradeManager
+- SpeedUpgrade speedUpgrade
+- SizeUpgrade sizeUpgrade
+- HarvestUpgrade harvestUpgrade
+- SalesUpgrade salesUpgrade
+- MoveUpgrade moveUpgrade
+- Upgrades[] upgradeList
+-------------------------------
++ UpgradeManager()
++ SpeedUpgrade getSpeedUpgrade()
++ SizeUpgrade getSizeUpgrade()
++ HarvestUpgrade getHarvestUpgrade()
++ SalesUpgrade getSalesUpgrade()
++ MoveUpgrade getMoveUpgrade()
++ Upgrades[] getUpgradeList()
+
+abstract class Harvestable
+- double x
+- double y
+- int width
+- int height
+--------------------------
++ Harvestable(double x, double y, int width, int height)
++ double getX()
++ double getY()
++ int getWidth()
++ int getHeight()
++ abstract ItemType getType()
++ abstract Sprite getSprite()
+
+
+class Grass extends Harvestable
+- ItemType type
+- Sprite sprite
+-------------------
++ Grass(double x, double y, int width, int height)
++ ItemType getType()
++ Sprite getSprite()
+
