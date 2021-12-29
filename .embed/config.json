@@ -3,8 +3,8 @@
 	"tags":["Game"],
 	"description":"Simple collection/upgrade game made using HTML5 and Javascript.",
 	"embed":{
-		"width":804,
-		"height":604,
+		"width":800,
+		"height":600,
 		"file":"index.html"
 	},
 	"date":"July 2019"
